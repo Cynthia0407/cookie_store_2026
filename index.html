@@ -1,0 +1,610 @@
+<!DOCTYPE html>
+<!-- saved from url=(0035)https://cookieshopping.netlify.app/ -->
+<html lang="ko"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>3-2 도토리반 매점</title>
+    <style>
+        @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+
+        body {
+            font-family: 'Pretendard', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0; padding: 0;
+            display: flex; height: 100vh; overflow: hidden; user-select: none;
+        }
+
+        /* === 메인 레이아웃 === */
+        .main-screen { flex: 3; padding: 20px 40px; overflow-y: auto; display: flex; flex-direction: column; position: relative; }
+        .sidebar { flex: 1; background: white; border-left: 1px solid #ddd; display: flex; flex-direction: column; padding: 20px; box-shadow: -2px 0 10px rgba(0,0,0,0.05); }
+        
+        .top-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: white; padding: 15px 25px; border-radius: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .title-area h1 { margin: 0; font-size: 24px; color: #333; display: flex; align-items: center; gap: 10px;}
+        .big-hand-area { background: linear-gradient(135deg, #FF9966, #FF5E62); color: white; padding: 8px 20px; border-radius: 20px; font-weight: bold; box-shadow: 0 4px 10px rgba(255, 94, 98, 0.3); font-size: 14px; transition: 0.3s; }
+        .setting-btn { background: none; border: none; font-size: 24px; cursor: pointer; opacity: 0.5; transition: 0.3s; }
+        .setting-btn:hover { opacity: 1; transform: rotate(90deg); }
+
+        /* === 그리드 === */
+        .grid-container { display: grid; grid-template-columns: repeat(6, 1fr); gap: 15px; align-content: start; padding-bottom: 50px; }
+        @media (max-width: 1200px) { .grid-container { grid-template-columns: repeat(4, 1fr); } }
+
+        /* 카드 스타일 */
+        .card { background-color: #FFD783; border-radius: 10px; padding: 12px; height: 95px; position: relative; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 2px 5px rgba(0,0,0,0.05); display: flex; flex-direction: column; justify-content: space-between; border: 3px solid transparent; }
+        .card:hover { transform: scale(1.03); z-index: 10; }
+        .card.is-guest { background-color: #b8e994; border-color: #78e08f; box-shadow: 0 4px 10px rgba(184, 233, 148, 0.4); }
+        .card.is-vip { background-color: #b8e994; border: 4px solid #ffd700; box-shadow: 0 0 20px rgba(255, 215, 0, 0.8); animation: superPulse 1.5s infinite; z-index: 5; }
+        @keyframes superPulse { 0% {box-shadow: 0 0 0 0 rgba(255, 215, 0, 0.8);} 50% {box-shadow: 0 0 0 15px rgba(255, 215, 0, 0);} 100% {box-shadow: 0 0 0 0 rgba(255, 215, 0, 0);} }
+        .card.is-vip .emoji-badge { font-size: 24px; } 
+
+        .card-num { font-size: 32px; font-weight: 900; color: rgba(0,0,0,0.1); position: absolute; top: 5px; left: 10px; line-height: 1; }
+        .card-name { font-size: 18px; font-weight: bold; color: #333; text-align: right; z-index: 2; display: flex; justify-content: flex-end; align-items: center; gap: 4px; }
+        .emoji-badge { font-size: 18px; animation: pop 0.3s; }
+        .spent-badge { text-align: right; font-size: 14px; font-weight: bold; color: #d63031; background: rgba(255,255,255,0.8); padding: 2px 6px; border-radius: 4px; margin-top: 2px; display: none; float: right; clear: both; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .card.is-guest .spent-badge { display: inline-block; }
+        .card-stats { display: flex; align-items: center; justify-content: flex-end; font-size: 13px; color: #555; font-weight: 600; margin-top: auto; }
+
+        /* === 사이드바 & 모달 === */
+        .log-area { flex: 1; overflow-y: auto; font-size: 13px; }
+        .log-item { padding: 12px; border-bottom: 1px solid #f0f0f0; display: flex; justify-content: space-between; align-items: center; background: #fff; animation: slideIn 0.2s ease-out; }
+        .refund-btn { background: #fff; border: 1px solid #ccc; color: #555; padding: 5px 10px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-left: 10px; }
+        .refund-btn:hover { border-color: #d63031; color: #d63031; background: #fff0f0; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .modal { background: white; padding: 30px; border-radius: 20px; width: 850px; max-height: 90vh; overflow-y: auto; box-shadow: 0 10px 40px rgba(0,0,0,0.3); text-align: center; position: relative; }
+        
+        .snack-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 20px; }
+        .snack-btn { background: #fff; border: 2px solid #eee; border-radius: 12px; padding: 15px 5px; cursor: pointer; transition: 0.2s; display: flex; flex-direction: column; align-items: center; min-height: 100px; justify-content: center; }
+        .snack-btn:hover { border-color: #FFD783; background: #FFF9E6; transform: translateY(-3px); }
+        
+        /* === 설정 화면 === */
+        .setup-step { display: none; }
+        .setup-step.active { display: block; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from {opacity:0;} to {opacity:1;} }
+
+        .step-header { margin-bottom: 20px; border-bottom: 2px solid #f0f0f0; padding-bottom: 10px; text-align: left; }
+        .step-title { font-size: 22px; font-weight: bold; color: #333; }
+        .step-desc { font-size: 14px; color: #666; margin-top: 5px; }
+        
+        .input-box label { display: flex; align-items: center; gap: 5px; font-weight: bold; margin-bottom: 8px; color: #444; }
+        .input-box input, .input-box textarea { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 8px; box-sizing: border-box; font-size: 14px; }
+        .info-box { background: #e3f2fd; color: #0d47a1; padding: 10px; border-radius: 8px; font-size: 13px; text-align: left; margin-bottom: 10px; line-height: 1.5; }
+
+        /* === 메뉴 편집기 === */
+        .menu-buffet { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; max-height: 500px; overflow-y: auto; padding: 5px; }
+        .menu-item-edit { border: 2px solid #eee; border-radius: 10px; padding: 10px; position: relative; display: flex; flex-direction: column; align-items: center; gap: 5px; background: white; }
+        .menu-item-edit.selected { border-color: #27ae60; background: #eafaf1; box-shadow: 0 4px 10px rgba(39, 174, 96, 0.2); }
+        .menu-item-edit.selected::after { content: "✔"; position: absolute; top: 5px; left: 5px; color: #27ae60; font-weight: bold; font-size:18px; }
+        
+        .edit-icon { width: 40px; text-align: center; border: 1px solid #ddd; border-radius: 5px; font-size: 20px; padding: 2px; }
+        .edit-name { width: 90%; text-align: center; border: 1px solid #ddd; border-radius: 5px; padding: 4px; font-size: 13px; font-weight: bold; }
+        .edit-price { width: 60px; text-align: center; border: 1px solid #ddd; border-radius: 5px; padding: 4px; color: #e17055; font-weight: bold; }
+        
+        .btn-delete { position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; background: #ff7675; color: white; border-radius: 50%; border: none; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; justify-content: center; align-items: center; }
+        .btn-add-menu { grid-column: span 5; background: #f0f0f0; border: 2 dashed #ccc; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; }
+        .btn-add-menu:hover { background: #e0e0e0; border-color: #999; }
+
+        .btn-group { display: flex; gap: 10px; margin-top: 30px; }
+        .btn-next { flex: 1; background: #333; color: white; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        .btn-prev { flex: 0.5; background: #eee; color: #333; padding: 15px; border: none; border-radius: 10px; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+        /* === 🍞 토스트 메시지 === */
+        #toast { visibility: hidden; min-width: 250px; background-color: rgba(51, 51, 51, 0.95); color: #fff; text-align: center; border-radius: 30px; padding: 16px; position: fixed; z-index: 2000; left: 50%; top: 50%; transform: translate(-50%, -50%); font-size: 18px; font-weight: bold; box-shadow: 0 4px 15px rgba(0,0,0,0.3); opacity: 0; transition: opacity 0.3s; white-space: pre-line; }
+        #toast.show { visibility: visible; opacity: 1; }
+        
+        /* 로딩 스피너 (자동 로그인용) */
+        .loading-overlay { position: absolute; top:0; left:0; width:100%; height:100%; background:rgba(255,255,255,0.9); z-index:10; display:flex; flex-direction:column; justify-content:center; align-items:center; font-weight:bold; color:#555; }
+    </style>
+</head>
+<body>
+
+    <div id="toast">메시지 내용</div>
+
+    <div class="main-screen">
+        <div class="top-bar">
+            <div class="title-area"><h1 id="mainTitle">🏪 3-2 도토리반 매점 <button class="setting-btn" onclick="openSetupMode()">⚙️</button></h1></div>
+            <div class="big-hand-area" id="bigHandDisplay">👋 3-2 도토리반 매점 오픈!</div>
+        </div>
+        <div class="grid-container" id="gridContainer"><div class="card">
+                    <div class="card-num">1</div>
+                    <div class="card-name"><span>강해율</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">2</div>
+                    <div class="card-name"><span>김동혁</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">3</div>
+                    <div class="card-name"><span>김민지</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">4</div>
+                    <div class="card-name"><span>김유진</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">5</div>
+                    <div class="card-name"><span>김하연</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">6</div>
+                    <div class="card-name"><span>문현빈</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">7</div>
+                    <div class="card-name"><span>박지유</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">8</div>
+                    <div class="card-name"><span>백승건</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">4</span><span style="opacity:0.3">/</span><span style="opacity:0.6">4</span></div>
+                </div><div class="card">
+                    <div class="card-num">9</div>
+                    <div class="card-name"><span>설두원</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">10</div>
+                    <div class="card-name"><span>심예나</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">11</div>
+                    <div class="card-name"><span>이도율</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">12</div>
+                    <div class="card-name"><span>이지혜</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">13</div>
+                    <div class="card-name"><span>전하온</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">14</div>
+                    <div class="card-name"><span>정시연</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">15</div>
+                    <div class="card-name"><span>정은우</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">16</div>
+                    <div class="card-name"><span>최나윤</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">17</div>
+                    <div class="card-name"><span>한도윤</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">5</span><span style="opacity:0.3">/</span><span style="opacity:0.6">5</span></div>
+                </div><div class="card">
+                    <div class="card-num">99</div>
+                    <div class="card-name"><span>도토리반</span></div>
+                    <div class="spent-badge">-0</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:#555">2</span><span style="opacity:0.3">/</span><span style="opacity:0.6">2</span></div>
+                </div></div>
+    </div>
+
+    <div class="sidebar">
+        <h3 style="margin-top:0;">🧾 구매 내역</h3>
+        <div class="log-area" id="logList"></div>
+    </div>
+
+    <div class="modal-overlay" id="snackModal" style="display: none;">
+        <div class="modal" style="width: 500px;">
+            <h2 id="modalTitle">3. 김민지</h2>
+            <div style="color:#888;">보유: <span id="modalCookie" style="color:#e67e22; font-weight:bold;">5</span></div>
+            <div class="snack-grid" id="menuGrid"><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">🍩</div><div style="font-weight:bold; font-size:14px;">초코파이</div><div style="color:#e17055; font-weight:bold;">-25</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">🍬</div><div style="font-weight:bold; font-size:14px;">마이쭈</div><div style="color:#e17055; font-weight:bold;">-5</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">🧸</div><div style="font-weight:bold; font-size:14px;">하리보</div><div style="color:#e17055; font-weight:bold;">-10</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">🍬</div><div style="font-weight:bold; font-size:14px;">오키오 젤리</div><div style="color:#e17055; font-weight:bold;">-5</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">✏️</div><div style="font-weight:bold; font-size:14px;">연필</div><div style="color:#e17055; font-weight:bold;">-20</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">✏️</div><div style="font-weight:bold; font-size:14px;">지우개</div><div style="color:#e17055; font-weight:bold;">-20</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">Ⓜ️</div><div style="font-weight:bold; font-size:14px;">엠앤엠 초콜릿</div><div style="color:#e17055; font-weight:bold;">-15</div></button><button class="snack-btn"><div style="font-size:30px; margin-bottom:5px;">✨</div><div style="font-weight:bold; font-size:14px;">간식 뽑기 2번</div><div style="color:#e17055; font-weight:bold;">-10</div></button></div>
+            <button class="btn-prev" style="margin-top:20px; width:100%;" onclick="closeModal(&#39;snackModal&#39;)">닫기</button>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="setupModal" style="display: none;">
+        <div class="modal">
+            <div id="autoLoading" class="loading-overlay" style="display: none;">
+                <div style="font-size:40px; margin-bottom:10px;">🔄</div>
+                <div>저장된 매점 정보를 불러오는 중...</div>
+            </div>
+
+            <div id="step1" class="setup-step">
+                <div class="step-header"><div class="step-title">🏪 오픈 준비 (1/2): 데이터 연결</div></div>
+                <div class="input-box">
+                    <label>🏪 매점 이름</label>
+                    <input type="text" id="storeNameInput" placeholder="예: 4-3반 행복 매점">
+                </div>
+                <div class="input-box">
+                    <label>🔑 API Key</label>
+                    <input type="text" id="apiKeyInput" placeholder="다했니 API Key 입력">
+                </div>
+                <div class="input-box">
+                    <label>📋 학생 목록 붙여넣기</label>
+                    <div class="info-box">
+                        다했니 <strong>[학생 관리]</strong> 표 전체를 드래그 복사(Ctrl+C)해서 붙여넣기(Ctrl+V) 하세요.<br>
+                        <strong>영문/숫자 9자리 학생 코드</strong>를 자동으로 찾아냅니다! 🤖
+                    </div>
+                    <textarea id="studentCodesInput" rows="5" placeholder="여기에 붙여넣으세요..."></textarea>
+                </div>
+                <div class="btn-group">
+                    <button class="btn-prev" onclick="useDemoData()">체험판으로 시작</button>
+                    <button class="btn-next" onclick="goToStep2(false)">다음: 메뉴 만들기 👉</button>
+                </div>
+            </div>
+
+            <div id="step2" class="setup-step active">
+                <div class="step-header">
+                    <div class="step-title">🍩 오픈 준비 (2/2): 메뉴판 완성</div>
+                    <div class="step-desc">원하는 메뉴를 자유롭게 선택하고 수정해서 오픈하세요!</div>
+                </div>
+                <div class="menu-buffet" id="menuBuffet"><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(0)">X</button>
+                    <input type="text" class="edit-icon" value="🍬" onchange="updateMenuData(0, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="마이쭈" onchange="updateMenuData(0, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="5" onchange="updateMenuData(0, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(1)">X</button>
+                    <input type="text" class="edit-icon" value="🧸" onchange="updateMenuData(1, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="하리보" onchange="updateMenuData(1, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="10" onchange="updateMenuData(1, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(2)">X</button>
+                    <input type="text" class="edit-icon" value="🍩" onchange="updateMenuData(2, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="초코파이" onchange="updateMenuData(2, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="25" onchange="updateMenuData(2, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(3)">X</button>
+                    <input type="text" class="edit-icon" value="🎁" onchange="updateMenuData(3, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="랜덤 뽑기" onchange="updateMenuData(3, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="5" onchange="updateMenuData(3, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(4)">X</button>
+                    <input type="text" class="edit-icon" value="🍚" onchange="updateMenuData(4, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="급식 일주일 우선권" onchange="updateMenuData(4, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="50" onchange="updateMenuData(4, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(5)">X</button>
+                    <input type="text" class="edit-icon" value="🪑" onchange="updateMenuData(5, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="하루 자리 바꾸기" onchange="updateMenuData(5, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="50" onchange="updateMenuData(5, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(6)">X</button>
+                    <input type="text" class="edit-icon" value="👫" onchange="updateMenuData(6, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="다음 자리 짝꿍 정하기" onchange="updateMenuData(6, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="100" onchange="updateMenuData(6, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(7)">X</button>
+                    <input type="text" class="edit-icon" value="👩🏻‍🏫" onchange="updateMenuData(7, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="선생님과 데이트" onchange="updateMenuData(7, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="200" onchange="updateMenuData(7, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(8)">X</button>
+                    <input type="text" class="edit-icon" value="📸" onchange="updateMenuData(8, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="선생님과 셀카" onchange="updateMenuData(8, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="20" onchange="updateMenuData(8, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(9)">X</button>
+                    <input type="text" class="edit-icon" value="🛡️" onchange="updateMenuData(9, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="숙제 1회 면제" onchange="updateMenuData(9, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="50" onchange="updateMenuData(9, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit ">
+                    <button class="btn-delete" onclick="deleteMenuItem(10)">X</button>
+                    <input type="text" class="edit-icon" value="🧹" onchange="updateMenuData(10, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="청소 면제" onchange="updateMenuData(10, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="50" onchange="updateMenuData(10, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(11)">X</button>
+                    <input type="text" class="edit-icon" value="✏️" onchange="updateMenuData(11, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="연필" onchange="updateMenuData(11, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="20" onchange="updateMenuData(11, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(12)">X</button>
+                    <input type="text" class="edit-icon" value="✏️" onchange="updateMenuData(12, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="지우개" onchange="updateMenuData(12, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="20" onchange="updateMenuData(12, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(13)">X</button>
+                    <input type="text" class="edit-icon" value="Ⓜ️" onchange="updateMenuData(13, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="엠앤엠 초콜릿" onchange="updateMenuData(13, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="15" onchange="updateMenuData(13, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(14)">X</button>
+                    <input type="text" class="edit-icon" value="✨" onchange="updateMenuData(14, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="간식 뽑기 2번" onchange="updateMenuData(14, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="10" onchange="updateMenuData(14, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(15)">X</button>
+                    <input type="text" class="edit-icon" value="🍪" onchange="updateMenuData(15, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="쿠키 1개 사용" onchange="updateMenuData(15, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="1" onchange="updateMenuData(15, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit selected">
+                    <button class="btn-delete" onclick="deleteMenuItem(16)">X</button>
+                    <input type="text" class="edit-icon" value="🍬" onchange="updateMenuData(16, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="오키오 젤리" onchange="updateMenuData(16, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="5" onchange="updateMenuData(16, &#39;price&#39;, this.value)">
+                </div><div class="menu-item-edit">
+                    <button class="btn-delete" onclick="deleteMenuItem(17)">X</button>
+                    <input type="text" class="edit-icon" value="🎵" onchange="updateMenuData(17, &#39;icon&#39;, this.value)">
+                    <input type="text" class="edit-name" value="미술시간 노래 신청권" onchange="updateMenuData(17, &#39;name&#39;, this.value)">
+                    <input type="number" class="edit-price" value="15" onchange="updateMenuData(17, &#39;price&#39;, this.value)">
+                </div><div class="btn-add-menu">+ 새 메뉴 만들기</div></div>
+                <div class="btn-group">
+                    <button class="btn-prev" onclick="goToStep1()">👈 이전</button>
+                    <button class="btn-next" onclick="finishSetup()">🎉 매점 오픈하기!</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        function playTone(type) {
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+            const osc = audioCtx.createOscillator();
+            const gainNode = audioCtx.createGain();
+            osc.connect(gainNode); gainNode.connect(audioCtx.destination);
+            const t = audioCtx.currentTime;
+            if (type === 'buy') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(1200, t); osc.frequency.exponentialRampToValueAtTime(2000, t+0.1);
+                gainNode.gain.setValueAtTime(0.3, t); gainNode.gain.exponentialRampToValueAtTime(0.01, t+0.3);
+            } else if (type === 'error') {
+                osc.type = 'sawtooth'; osc.frequency.setValueAtTime(150, t);
+                gainNode.gain.setValueAtTime(0.3, t); gainNode.gain.exponentialRampToValueAtTime(0.01, t+0.3);
+            } else if (type === 'refund') {
+                osc.type = 'sine'; osc.frequency.setValueAtTime(800, t); osc.frequency.exponentialRampToValueAtTime(300, t+0.2);
+                gainNode.gain.setValueAtTime(0.3, t); gainNode.gain.exponentialRampToValueAtTime(0.01, t+0.2);
+            }
+            osc.start(); osc.stop(t+0.3);
+        }
+
+        function showToast(message) {
+            const x = document.getElementById("toast");
+            x.innerText = message;
+            x.className = "show";
+            setTimeout(function(){ x.className = x.className.replace("show", ""); }, 1500);
+        }
+
+        const PRESET_MENU_BEST_15 = [
+            { name: "마이쭈", price: 5, icon: "🍬" }, { name: "하리보", price: 10, icon: "🧸" },
+            { name: "초코파이", price: 30, icon: "🍩" }, { name: "음료수", price: 50, icon: "🧃" },
+            { name: "랜덤뽑기", price: 30, icon: "🎁" }, { name: "급식 1등", price: 100, icon: "🍚" }, 
+            { name: "DJ신청권", price: 50, icon: "🎵" }, { name: "자리바꾸기", price: 300, icon: "🪑" }, 
+            { name: "짝꿍 정하기", price: 200, icon: "👫" }, { name: "1일 선생님", price: 500, icon: "👨‍🏫" },
+            { name: "쌤과 셀카", price: 50, icon: "📸" }, { name: "숙제 면제", price: 300, icon: "🛡️" },
+            { name: "청소 면제", price: 200, icon: "🧹" }, { name: "쿠션 사용", price: 30, icon: "🛋️" },
+            { name: "칭찬 스티커", price: 10, icon: "⭐" }
+        ];
+
+        let menuList = JSON.parse(JSON.stringify(PRESET_MENU_BEST_15));
+        let students = [];
+        let activeMenu = [];
+        let selectedMenuIndices = new Set([0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]); 
+        let selectedStudentIdx = null;
+        let logCounter = 0;
+        let storeName = "쿠키 매점";
+
+        // === 🚀 핵심 변경: 저장된 데이터 확인 및 자동 실행 ===
+        window.onload = function() {
+            const savedKey = localStorage.getItem('kiosk_apiKey');
+            const savedCodes = localStorage.getItem('kiosk_codes');
+            const savedName = localStorage.getItem('kiosk_storeName');
+            const savedMenu = localStorage.getItem('kiosk_menuList'); 
+            const savedIndices = localStorage.getItem('kiosk_indices');
+
+            if (savedKey) document.getElementById('apiKeyInput').value = savedKey;
+            if (savedCodes) document.getElementById('studentCodesInput').value = savedCodes;
+            if (savedName) { storeName = savedName; document.getElementById('storeNameInput').value = savedName; }
+            
+            if (savedMenu) { 
+                menuList = JSON.parse(savedMenu); 
+                if (savedIndices) { selectedMenuIndices = new Set(JSON.parse(savedIndices)); }
+            }
+            renderMenuBuffet();
+
+            // 저장된 키와 학생 코드가 모두 있으면 자동 로그인 시도
+            if (savedKey && savedCodes) {
+                document.getElementById('autoLoading').style.display = 'flex';
+                // 0.5초 뒤 실행 (UI 로딩 체감)
+                setTimeout(() => goToStep2(true), 500); 
+            }
+        };
+
+        function openSetupMode() { 
+            document.getElementById('autoLoading').style.display = 'none'; // 로딩창 끄고
+            document.getElementById('setupModal').style.display = 'flex'; 
+            goToStep1(); 
+        }
+        function goToStep1() { document.getElementById('step1').classList.add('active'); document.getElementById('step2').classList.remove('active'); }
+
+        // isAuto: true면 자동로그인 모드 (성공 시 바로 오픈)
+        async function goToStep2(isAuto) {
+            const key = document.getElementById('apiKeyInput').value.trim();
+            const rawText = document.getElementById('studentCodesInput').value;
+            const inputName = document.getElementById('storeNameInput').value.trim();
+
+            if (!key || !rawText) { 
+                if(isAuto) { document.getElementById('autoLoading').style.display = 'none'; return; } // 자동실패시 그냥 머뭄
+                showToast("API Key와 학생 정보를 입력해주세요!"); return; 
+            }
+            if (inputName) storeName = inputName;
+            
+            const codePattern = /[A-Za-z0-9]{9}/g;
+            const foundCodes = rawText.match(codePattern);
+
+            if (!foundCodes || foundCodes.length === 0) {
+                if(isAuto) { document.getElementById('autoLoading').style.display = 'none'; return; }
+                showToast("학생 코드를 찾지 못했어요 😢");
+                return;
+            }
+            const uniqueCodes = [...new Set(foundCodes)];
+            
+            const btn = document.querySelector('#step1 .btn-next');
+            if(!isAuto) btn.innerText = `⏳ 조회 중... (${uniqueCodes.length}명)`;
+
+            const results = [];
+            for (let code of uniqueCodes) {
+                try {
+                    const res = await fetch(`https://api.dahandin.com/openapi/v1/get/student/total?code=${code}`, {
+                        headers: { "X-API-Key": key }
+                    });
+                    const json = await res.json();
+                    if (json.result && json.data) {
+                        results.push({
+                            id: json.data.number || "?", name: json.data.name, current: json.data.totalCookie, total: json.data.cookie, spent: 0
+                        });
+                    }
+                } catch (e) { console.error(e); }
+            }
+
+            if(!isAuto) btn.innerText = "다음: 메뉴 만들기 👉";
+
+            if (results.length > 0) {
+                students = results.sort((a,b) => a.id - b.id);
+                localStorage.setItem('kiosk_apiKey', key);
+                localStorage.setItem('kiosk_codes', rawText);
+                localStorage.setItem('kiosk_storeName', storeName);
+                
+                document.getElementById('step1').classList.remove('active');
+                document.getElementById('step2').classList.add('active');
+                renderMenuBuffet();
+
+                // 자동 모드라면, 메뉴 확인 단계도 건너뛰고 바로 오픈!
+                if(isAuto) {
+                    finishSetup();
+                }
+
+            } else {
+                if(isAuto) document.getElementById('autoLoading').style.display = 'none'; // 로딩창 끄기
+                showToast("조회 실패! API Key 또는 다했니 계정을 확인해주세요 🗝️");
+            }
+        }
+
+        function useDemoData() {
+            storeName = document.getElementById('storeNameInput').value || "체험판 매점";
+            students = Array.from({length: 22}, (_, i) => ({ id: i + 1, name: "학생" + (i+1), current: Math.floor(Math.random() * 200) + 10, total: 2000, spent: 0 }));
+            document.getElementById('step1').classList.remove('active');
+            document.getElementById('step2').classList.add('active');
+            renderMenuBuffet();
+        }
+
+        function renderMenuBuffet() {
+            const container = document.getElementById('menuBuffet');
+            container.innerHTML = '';
+            menuList.forEach((item, index) => {
+                const div = document.createElement('div');
+                const isSelected = selectedMenuIndices.has(index);
+                div.className = `menu-item-edit ${isSelected ? 'selected' : ''}`;
+                div.onclick = (e) => { 
+                    if(e.target.tagName !== 'INPUT' && !e.target.classList.contains('btn-delete')) togglePresetItem(index, div); 
+                };
+                div.innerHTML = `
+                    <button class="btn-delete" onclick="deleteMenuItem(${index})">X</button>
+                    <input type="text" class="edit-icon" value="${item.icon}" onchange="updateMenuData(${index}, 'icon', this.value)">
+                    <input type="text" class="edit-name" value="${item.name}" onchange="updateMenuData(${index}, 'name', this.value)">
+                    <input type="number" class="edit-price" value="${item.price}" onchange="updateMenuData(${index}, 'price', this.value)">
+                `;
+                container.appendChild(div);
+            });
+            const addBtn = document.createElement('div');
+            addBtn.className = 'btn-add-menu'; addBtn.innerText = '+ 새 메뉴 만들기'; addBtn.onclick = addNewMenu;
+            container.appendChild(addBtn);
+        }
+
+        function togglePresetItem(idx, el) {
+            if (selectedMenuIndices.has(idx)) { selectedMenuIndices.delete(idx); el.classList.remove('selected'); } 
+            else { selectedMenuIndices.add(idx); el.classList.add('selected'); }
+        }
+
+        function updateMenuData(index, field, value) { if (field === 'price') value = parseInt(value); menuList[index][field] = value; }
+        function addNewMenu() { menuList.push({ name: "새 메뉴", price: 50, icon: "✨" }); renderMenuBuffet(); document.getElementById('menuBuffet').scrollTop = document.getElementById('menuBuffet').scrollHeight; }
+        function deleteMenuItem(index) { if (confirm("삭제하시겠습니까?")) { menuList.splice(index, 1); selectedMenuIndices.clear(); renderMenuBuffet(); } }
+
+        function finishSetup() {
+            activeMenu = [];
+            selectedMenuIndices.forEach(idx => { if(menuList[idx]) activeMenu.push(menuList[idx]); });
+            if (activeMenu.length === 0) { showToast("판매할 메뉴를 선택해주세요!"); return; }
+            localStorage.setItem('kiosk_menuList', JSON.stringify(menuList));
+            localStorage.setItem('kiosk_indices', JSON.stringify([...selectedMenuIndices]));
+
+            const titleHtml = `🏪 ${storeName} <button class="setting-btn" onclick="openSetupMode()">⚙️</button>`;
+            document.getElementById('mainTitle').innerHTML = titleHtml; document.title = storeName;
+            
+            // 자동 로딩창 끄기
+            document.getElementById('autoLoading').style.display = 'none';
+            document.getElementById('setupModal').style.display = 'none';
+            renderGrid();
+        }
+
+        function renderGrid() {
+            const container = document.getElementById('gridContainer');
+            container.innerHTML = '';
+            let maxIndex = -1, maxSpent = 0;
+            students.forEach((s, i) => { if(s.spent > maxSpent) { maxSpent = s.spent; maxIndex = i; } });
+            
+            const bigHand = document.getElementById('bigHandDisplay');
+            bigHand.innerHTML = maxSpent > 0 ? `👑 오늘의 큰손: ${students[maxIndex].name} (-${maxSpent})` : `👋 ${storeName} 오픈!`;
+
+            students.forEach((s, index) => {
+                const card = document.createElement('div');
+                let classes = 'card' + (s.spent > 0 ? ' is-guest' : '') + (s.spent > 0 && index === maxIndex ? ' is-vip' : '');
+                let emoji = s.spent > 0 ? (index === maxIndex ? '<span class="emoji-badge">👑</span>' : '<span class="emoji-badge">🛍️</span>') : '';
+                
+                card.className = classes;
+                card.onclick = () => openSnackModal(index);
+                card.innerHTML = `
+                    <div class="card-num">${s.id}</div>
+                    <div class="card-name"><span>${s.name}</span>${emoji}</div>
+                    <div class="spent-badge">-${s.spent}</div>
+                    <div class="card-stats"><span>🍪</span> <span style="color:${s.spent>0?'#d63031':'#555'}">${s.current}</span><span style="opacity:0.3">/</span><span style="opacity:0.6">${s.total}</span></div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        function openSnackModal(idx) {
+            selectedStudentIdx = idx;
+            document.getElementById('modalTitle').innerText = `${students[idx].id}. ${students[idx].name}`;
+            document.getElementById('modalCookie').innerText = students[idx].current;
+            const grid = document.getElementById('menuGrid');
+            grid.innerHTML = '';
+            activeMenu.forEach(item => {
+                const btn = document.createElement('button');
+                btn.className = 'snack-btn';
+                btn.onclick = () => buyItem(item.name, item.price);
+                btn.innerHTML = `<div style="font-size:30px; margin-bottom:5px;">${item.icon}</div><div style="font-weight:bold; font-size:14px;">${item.name}</div><div style="color:#e17055; font-weight:bold;">-${item.price}</div>`;
+                grid.appendChild(btn);
+            });
+            document.getElementById('snackModal').style.display = 'flex';
+        }
+
+        function buyItem(item, price) {
+            const s = students[selectedStudentIdx];
+            if(s.current < price) { playTone('error'); showToast("잔액이 부족합니다! 😭"); return; }
+            playTone('buy'); s.current -= price; s.spent += price;
+            addLog(s.name, item, price, selectedStudentIdx); renderGrid(); closeModal('snackModal');
+        }
+
+        function addLog(name, item, price, idx) {
+            const list = document.getElementById('logList');
+            const logId = 'log-' + (++logCounter);
+            const div = document.createElement('div');
+            div.className = 'log-item'; div.id = logId;
+            div.innerHTML = `<div><strong>${name}</strong> <small style="color:#888">${item}</small></div><div><span style="color:#d63031; font-weight:bold">-${price}</span><button class="refund-btn" onclick="refund('${logId}', ${idx}, ${price})">환불</button></div>`;
+            list.prepend(div);
+        }
+
+        function refund(id, idx, price) { playTone('refund'); students[idx].current += price; students[idx].spent -= price; document.getElementById(id).remove(); renderGrid(); }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+    </script>
+
+</body></html>
