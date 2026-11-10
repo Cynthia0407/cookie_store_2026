@@ -78,6 +78,13 @@
         .edit-icon { width: 40px; text-align: center; border: 1px solid #ddd; border-radius: 5px; font-size: 20px; padding: 2px; }
         .edit-name { width: 90%; text-align: center; border: 1px solid #ddd; border-radius: 5px; padding: 4px; font-size: 13px; font-weight: bold; }
         .edit-price { width: 60px; text-align: center; border: 1px solid #ddd; border-radius: 5px; padding: 4px; color: #e17055; font-weight: bold; }
+        /* 추가 기능: 메뉴별 할인율 (기존 디자인 유지) */
+        .discount-editor { display: flex; align-items: center; justify-content: center; gap: 4px; font-size: 12px; color: #555; width: 100%; }
+        .edit-discount { width: 49px; text-align: center; border: 1px solid #f5b7b1; border-radius: 5px; padding: 4px; font-weight: bold; color: #c0392b; }
+        .discount-preview { font-size: 11px; color: #c0392b; font-weight: bold; min-height: 13px; }
+        .sale-badge { display: inline-block; background: #e74c3c; color: white; font-size: 11px; font-weight: 900; padding: 3px 7px; border-radius: 12px; margin-bottom: 3px; }
+        .original-price { font-size: 12px; color: #999; text-decoration: line-through; }
+        .sale-price { color: #d63031; font-weight: 900; font-size: 17px; }
         
         .btn-delete { position: absolute; top: -5px; right: -5px; width: 24px; height: 24px; background: #ff7675; color: white; border-radius: 50%; border: none; cursor: pointer; font-weight: bold; font-size: 12px; display: flex; justify-content: center; align-items: center; }
         .btn-add-menu { grid-column: span 5; background: #f0f0f0; border: 2 dashed #ccc; color: #555; padding: 10px; border-radius: 10px; cursor: pointer; font-weight: bold; }
@@ -245,7 +252,7 @@
             <div id="step2" class="setup-step active">
                 <div class="step-header">
                     <div class="step-title">🍩 오픈 준비 (2/2): 메뉴판 완성</div>
-                    <div class="step-desc">원하는 메뉴를 자유롭게 선택하고 수정해서 오픈하세요!</div>
+                    <div class="step-desc">원하는 메뉴를 자유롭게 선택하고 수정해서 오픈하세요! 할인율은 메뉴별 0~100%로 설정할 수 있어요. (0% = 할인 없음)</div>
                 </div>
                 <div class="menu-buffet" id="menuBuffet"><div class="menu-item-edit selected">
                     <button class="btn-delete" onclick="deleteMenuItem(0)">X</button>
@@ -511,7 +518,9 @@
                     <button class="btn-delete" onclick="deleteMenuItem(${index})">X</button>
                     <input type="text" class="edit-icon" value="${item.icon}" onchange="updateMenuData(${index}, 'icon', this.value)">
                     <input type="text" class="edit-name" value="${item.name}" onchange="updateMenuData(${index}, 'name', this.value)">
-                    <input type="number" class="edit-price" value="${item.price}" onchange="updateMenuData(${index}, 'price', this.value)">
+                    <input type="number" min="0" class="edit-price" value="${item.price}" aria-label="원래 가격" title="원래 가격" onchange="updateMenuData(${index}, 'price', this.value)">
+                    <label class="discount-editor">할인 <input type="number" min="0" max="100" step="1" class="edit-discount" value="${normalizeDiscount(item.discount)}" aria-label="할인율" onchange="updateMenuData(${index}, 'discount', this.value); this.value = normalizeDiscount(menuList[${index}].discount); this.closest('.menu-item-edit').querySelector('.discount-preview').textContent = getDiscountPreview(menuList[${index}]);">%</label>
+                    <div class="discount-preview">${getDiscountPreview(item)}</div>
                 `;
                 container.appendChild(div);
             });
@@ -525,7 +534,25 @@
             else { selectedMenuIndices.add(idx); el.classList.add('selected'); }
         }
 
-        function updateMenuData(index, field, value) { if (field === 'price') value = parseInt(value); menuList[index][field] = value; }
+        function normalizeDiscount(value) {
+            return Math.min(100, Math.max(0, Math.round(Number(value) || 0)));
+        }
+        function getSalePrice(item) {
+            const original = Math.max(0, Math.round(Number(item.price) || 0));
+            return Math.round(original * (100 - normalizeDiscount(item.discount)) / 100);
+        }
+        function getDiscountPreview(item) {
+            return normalizeDiscount(item.discount) ? `할인가: ${getSalePrice(item)} 🍪` : '';
+        }
+        function updateMenuData(index, field, value) {
+            if (field === 'price') value = Math.max(0, Math.round(Number(value) || 0));
+            if (field === 'discount') value = normalizeDiscount(value);
+            menuList[index][field] = value;
+            if (field === 'price' || field === 'discount') {
+                const editor = document.getElementById('menuBuffet').children[index];
+                if (editor) editor.querySelector('.discount-preview').textContent = getDiscountPreview(menuList[index]);
+            }
+        }
         function addNewMenu() { menuList.push({ name: "새 메뉴", price: 50, icon: "✨" }); renderMenuBuffet(); document.getElementById('menuBuffet').scrollTop = document.getElementById('menuBuffet').scrollHeight; }
         function deleteMenuItem(index) { if (confirm("삭제하시겠습니까?")) { menuList.splice(index, 1); selectedMenuIndices.clear(); renderMenuBuffet(); } }
 
@@ -580,8 +607,10 @@
             activeMenu.forEach(item => {
                 const btn = document.createElement('button');
                 btn.className = 'snack-btn';
-                btn.onclick = () => buyItem(item.name, item.price);
-                btn.innerHTML = `<div style="font-size:30px; margin-bottom:5px;">${item.icon}</div><div style="font-weight:bold; font-size:14px;">${item.name}</div><div style="color:#e17055; font-weight:bold;">-${item.price}</div>`;
+                const discount = normalizeDiscount(item.discount);
+                const salePrice = getSalePrice(item);
+                btn.onclick = () => buyItem(item.name, salePrice);
+                btn.innerHTML = `<div style="font-size:30px; margin-bottom:5px;">${item.icon}</div><div style="font-weight:bold; font-size:14px;">${item.name}</div>${discount ? `<div class="sale-badge">${discount}% 할인</div><div class="original-price">-${item.price}</div><div class="sale-price">-${salePrice} 🍪</div>` : `<div style="color:#e17055; font-weight:bold;">-${item.price}</div>`}`;
                 grid.appendChild(btn);
             });
             document.getElementById('snackModal').style.display = 'flex';
